@@ -13,7 +13,7 @@
 // #include "connected_layer.h"
 // #include "deconvolutional_layer.h"
 #include "convolutional_layer.h"
-// #include "cost_layer.h"
+#include "cost_layer.h"
 // #include "crnn_layer.h"
 // #include "crop_layer.h"
 // #include "detection_layer.h"
@@ -426,17 +426,17 @@ int *parse_yolo_mask(char *a, int *num)
 //     return layer;
 // }
 
-// cost_layer parse_cost(list *options, size_params params)
-// {
-//     char *type_s = option_find_str(options, "type", "sse");
-//     COST_TYPE type = get_cost_type(type_s);
-//     float scale = option_find_float_quiet(options, "scale",1);
-//     cost_layer layer = make_cost_layer(params.batch, params.inputs, type, scale);
-//     layer.ratio =  option_find_float_quiet(options, "ratio",0);
-//     layer.noobject_scale =  option_find_float_quiet(options, "noobj", 1);
-//     layer.thresh =  option_find_float_quiet(options, "thresh",0);
-//     return layer;
-// }
+cost_layer parse_cost(list *options, size_params params)
+{
+    char *type_s = option_find_str(options, "type", "sse");
+    COST_TYPE type = get_cost_type(type_s);
+    float scale = option_find_float_quiet(options, "scale",1);
+    cost_layer layer = make_cost_layer(params.batch, params.inputs, type, scale);
+    layer.ratio =  option_find_float_quiet(options, "ratio",0);
+    layer.noobject_scale =  option_find_float_quiet(options, "noobj", 1);
+    layer.thresh =  option_find_float_quiet(options, "thresh",0);
+    return layer;
+}
 
 // crop_layer parse_crop(list *options, size_params params)
 // {
@@ -777,7 +777,9 @@ network *parse_network_cfg(char *filename)
         LAYER_TYPE lt = string_to_layer_type(s->type);
         if(lt == CONVOLUTIONAL){
             l = parse_convolutional(options, params);
-        }else{
+        } else if(lt == COST){
+            l = parse_cost(options, params);
+        } else {
             fprintf(stderr, "Type not recognized: %s\n", s->type);
         }
         // else if(lt == DECONVOLUTIONAL){
