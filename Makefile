@@ -58,7 +58,7 @@ CFLAGS+= -DCUDNN
 LDFLAGS+= -lcudnn
 endif
 
-OBJ=gemm.o utils.o convolutional_layer.o list.o image.o im2col.o col2im.o blas.o data.o matrix.o network.o parser.o option_list.o activations.o layer.o batchnorm_layer.o cost_layer.o
+OBJ=gemm.o utils.o convolutional_layer.o list.o image.o im2col.o col2im.o blas.o data.o matrix.o network.o parser.o option_list.o activations.o layer.o batchnorm_layer.o cost_layer.o espcn_layer.o
 # EXECOBJA=captcha.o lsd.o super.o art.o tag.o cifar.o go.o rnn.o segmenter.o regressor.o classifier.o coco.o yolo.o detector.o enhencer.o nightmare.o instance-segmenter.o darknet.o
 EXECOBJA= enhencer.o darknet.o
 

@@ -82,7 +82,6 @@ void resize_cost_layer(cost_layer *l, int inputs)
 void forward_cost_layer(cost_layer l, network net)
 {
     if (!net.truth) return;
-    printf("net.truth: %f\n", *net.truth);
     if(l.cost_type == MASKED){
         int i;
         for(i = 0; i < l.batch*l.inputs; ++i){

@@ -14,6 +14,7 @@
 // #include "deconvolutional_layer.h"
 #include "convolutional_layer.h"
 #include "cost_layer.h"
+#include "espcn_layer.h"
 // #include "crnn_layer.h"
 // #include "crop_layer.h"
 // #include "detection_layer.h"
@@ -83,6 +84,7 @@ LAYER_TYPE string_to_layer_type(char * type)
             || strcmp(type, "[softmax]")==0) return SOFTMAX;
     if (strcmp(type, "[route]")==0) return ROUTE;
     if (strcmp(type, "[upsample]")==0) return UPSAMPLE;
+    if (strcmp(type, "[espcn]")==0) return ESPCN;
     return BLANK;
 }
 
@@ -175,6 +177,27 @@ typedef struct size_params{
 //     return l;
 // }
 
+
+espcn_layer parse_espcn(list *options, size_params params)
+{
+    int n = option_find_int(options, "filters",1);
+    int scale = option_find_int(options, "scale",1);
+    int groups = option_find_int_quiet(options, "groups", 1);
+
+
+
+    int batch,h,w,c;
+    h = params.h;
+    w = params.w;
+    c = params.c;
+    batch=params.batch;
+    if(!(h && w && c)) error("Layer before convolutional layer must output image.");
+
+
+    espcn_layer layer = make_espcn_layer(batch,h,w,c,n,groups);
+
+    return layer;
+}
 
 convolutional_layer parse_convolutional(list *options, size_params params)
 {
@@ -779,6 +802,8 @@ network *parse_network_cfg(char *filename)
             l = parse_convolutional(options, params);
         } else if(lt == COST){
             l = parse_cost(options, params);
+        } else if(lt == ESPCN){
+            l = parse_espcn(options, params);
         } else {
             fprintf(stderr, "Type not recognized: %s\n", s->type);
         }
@@ -1031,9 +1056,13 @@ void save_weights_upto(network *net, char *filename, int cutoff)
     int i;
     for(i = 0; i < net->n && i < cutoff; ++i){
         layer l = net->layers[i];
+        printf("saving net index %d, dontsave: %d\n", i, l.dontsave);
         if (l.dontsave) continue;
         if(l.type == CONVOLUTIONAL || l.type == DECONVOLUTIONAL){
             save_convolutional_weights(l, fp);
+        // } if(l.type == ESPCN){
+        //     printf("espcn layer index %d", i);
+        //     continue;
         } if(l.type == CONNECTED){
             save_connected_weights(l, fp);
         } if(l.type == BATCHNORM){

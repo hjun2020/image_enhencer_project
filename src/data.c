@@ -444,7 +444,7 @@ void fill_truth_mask(char *path, int num_boxes, float *truth, int classes, int w
     free_image(part);
 }
 
-void fill_truth_test(char *path, float *matrix, float *truth, int n, int classes, int flip, float dx, float dy, float sx, float sy)
+void fill_truth_test(char *path, float *matrix, float *truth, int n)
 {
 
     int i;
@@ -1058,7 +1058,7 @@ data load_data_enhence(int n, char **paths, int m, int w, int h, int boxes, int 
     d.X.cols = h*w*3;
 
     // d.y = make_matrix(n, 5*boxes);
-    d.y = make_matrix(n, w*h*3);
+    d.y = make_matrix(n, w*h*27);
     // d.y.rows = n;
     // d.y.vals = calloc(d.y.rows, sizeof(float*));
     // d.y.cols = h*w*3;
@@ -1074,35 +1074,35 @@ data load_data_enhence(int n, char **paths, int m, int w, int h, int boxes, int 
         // fill_image(sized, .5);
 
 
-        image sized_truth = resize_image(orig, w,h);
+        image sized_truth = resize_image(orig, 3*w,3*h);
         // fill_image(sized_truth, .5);
         // printf("%d %d %d %d\n", sized_truth.w, sized_truth.h, sized_truth.c, sized_truth.w*sized_truth.h*sized_truth.c);
         // printf("%d\n", d.y.cols);
 
-        float dw = jitter * orig.w;
-        float dh = jitter * orig.h;
+        // float dw = jitter * orig.w;
+        // float dh = jitter * orig.h;
 
-        float new_ar = (orig.w + rand_uniform(-dw, dw)) / (orig.h + rand_uniform(-dh, dh));
+        // float new_ar = (orig.w + rand_uniform(-dw, dw)) / (orig.h + rand_uniform(-dh, dh));
         //float scale = rand_uniform(.25, 2);
-        float scale = 1;
+        // float scale = 1;
 
-        float nw, nh;
+        // float nw, nh;
 
-        if(new_ar < 1){
-            nh = scale * h;
-            nw = nh * new_ar;
-        } else {
-            nw = scale * w;
-            nh = nw / new_ar;
-        }
+        // if(new_ar < 1){
+        //     nh = scale * h;
+        //     nw = nh * new_ar;
+        // } else {
+        //     nw = scale * w;
+        //     nh = nw / new_ar;
+        // }
 
-        float dx = rand_uniform(0, w - nw);
-        float dy = rand_uniform(0, h - nh);
+        // float dx = rand_uniform(0, w - nw);
+        // float dy = rand_uniform(0, h - nh);
 
-        place_image(orig, nw, nh, dx, dy, sized);
+        // place_image(orig, nw, nh, dx, dy, sized);
         // place_image(orig, nw, nh, dx, dy, sized_truth);
 
-        random_distort_image(sized, hue, saturation, exposure);
+        // random_distort_image(sized, hue, saturation, exposure);
 
         // int flip = rand()%2;
         int flip = 0;
@@ -1111,11 +1111,18 @@ data load_data_enhence(int n, char **paths, int m, int w, int h, int boxes, int 
         // d.y.vals[i] = d.X.vals[i];
 
 
-        fill_truth_test(random_paths[i], sized_truth.data, d.y.vals[i], d.y.cols, classes, flip, -dx/w, -dy/h, nw/w, nh/h);
+        // fill_truth_test(random_paths[i], sized_truth.data, d.y.vals[i], d.y.cols, classes, flip, -dx/w, -dy/h, nw/w, nh/h);
+        fill_truth_test(random_paths[i], sized_truth.data, d.y.vals[i], d.y.cols);
+
         // printf("address of truth is %p, address of matrix %p\n", (void*)d.X.vals[i], (void*)d.y.vals[i]);
         // printf("address of truth is %f, address of matrix %f\n", sized_truth.data[0], d.y.vals[i][0]);
-        // save_image(sized, "sized");
-        // save_image(sized_truth, "sized_truth");
+        // image sized_real = make_empty_image(w,h,3);
+        // sized_real.data = d.X.vals[0];
+        // image sized_truth_real = make_empty_image(3*w,3*h,3);
+        // sized_truth_real.data = d.y.vals[0];
+        // save_image(sized_real, "sized");
+        // save_image(sized_truth_real, "sized_truth");
+        
         // printf("sized truth cols: %d\n", d.y.cols);
         // save_image(orig, "orig");
         free_image(orig);
