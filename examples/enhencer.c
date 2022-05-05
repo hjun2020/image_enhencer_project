@@ -623,6 +623,7 @@ void test_enhencer(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         image im = load_image_color(input,0,0);
         save_image(im, "loaded_image");
         image sized = resize_image(im, net->w, net->h);
+        save_image(sized, "input_image");
         // image sized = letterbox_image(im, net->w, net->h);
         //image sized = resize_image(im, net->w, net->h);
         //image sized2 = resize_max(im, net->w);
