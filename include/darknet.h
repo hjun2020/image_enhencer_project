@@ -513,6 +513,16 @@ typedef struct {
     float *data;
 } image;
 
+
+typedef struct {
+    int row;
+    int col;
+    int w;
+    int h;
+    image *data;
+} images;
+
+
 typedef struct{
     float x, y, w, h;
 } box;
@@ -694,6 +704,8 @@ void set_batch_network(network *net, int b);
 void set_temp_network(network *net, float t);
 image load_image(char *filename, int w, int h, int c);
 image load_image_color(char *filename, int w, int h);
+image load_partial_image_stb(char *filename, int channels, int w_start, int w_len, int h_start, int h_len);
+image merge_partial_images(images ims, int channel, int w, int h);
 image make_image(int w, int h, int c);
 image resize_image(image im, int w, int h);
 void censor_image(image im, int dx, int dy, int w, int h);

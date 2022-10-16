@@ -1289,7 +1289,109 @@ void test_resize(char *filename)
 #endif
 }
 
+image merge_partial_images(images ims, int channel, int w, int h)
+{
+    image out_im = make_image(w, h, channel);
+    int row = ims.row;
+    int col = ims.col;
+    int in_w = ims.w;
+    int in_h = ims.h;
+    printf("row: %d, col: %d, in_w: %d, in_h: %d", row, col, in_w, in_h);
 
+
+    int row_offset = (row * in_h - h) / (row-1);
+    int col_offset = (col * in_w - w) / (col-1);
+
+    int row_remainder = (row * in_h - h) % (row-1);
+    int col_remainder = (col * in_w - w) % (col-1);
+
+    // printf("row: %d, col: %d, in_w: %d, in_h: %d, row_offset: %d, col_offset: %d, row_remainder: %d, col_remainder: %d\n", row, col, in_w, in_h, row_offset, col_offset, row_remainder, col_remainder);
+
+    int edge_offset = 5;
+    for(int c=0; c<channel; c++){
+        for(int i=0; i<row * in_w ; i++){
+            for(int j=0; j<col * in_h; j++){
+                int row_idx = i / (in_h);
+                int col_idx = j / (in_w);
+                int w_idx = j % in_w;
+                int h_idx = i % in_h;
+
+                int r_offset = row_idx*(row_offset);
+                int c_offset = col_idx*(col_offset);
+
+                // int is_col_edge = 1;
+                // if (col_idx == 0){
+                //     is_col_edge = 0;
+                // }
+
+
+                // int is_row_edge = 1;
+                // if (row_idx == 0){
+                //     is_row_edge = 0;
+                // }
+                
+                
+                if(row_idx == row-1){
+                    r_offset += row_remainder;
+                }
+                if(col_idx == col-1){
+                    c_offset += col_remainder;
+                }
+
+                // r_offset -= is_col_edge * edge_offset;
+                // c_offset -= is_row_edge * edge_offset;
+
+
+                // out_im.data[(j-c_offset) + (i-r_offset)*w + w*h*c] 
+                // = ims.data[row_idx*col+col_idx].data[(h_idx+(edge_offset*is_row_edge))*in_w 
+                // + w_idx+(edge_offset*is_col_edge) + c*in_h*in_w];
+
+                if (row_idx != 0 && h_idx < 3){
+                    continue;
+                }
+                if (col_idx != 0 && w_idx < 3){
+                    continue;
+                }
+                if (row_idx != row-1 && h_idx > in_h-3){
+                    continue;
+                }
+                if (col_idx != col-1 && w_idx > in_w-3){
+                    continue;
+                }
+                out_im.data[(j-c_offset) + (i-r_offset)*w + w*h*c] 
+                = ims.data[row_idx*col+col_idx].data[(h_idx)*in_w 
+                + w_idx + c*in_h*in_w];
+            }
+        }
+
+    }
+    return out_im;
+}
+
+
+image load_partial_image_stb(char *filename, int channels, int w_start, int w_len, int h_start, int h_len)
+{
+    int w, h, c;
+    unsigned char *data = stbi_load(filename, &w, &h, &c, channels);
+    if (!data) {
+        fprintf(stderr, "Cannot load image \"%s\"\nSTB Reason: %s\n", filename, stbi_failure_reason());
+        exit(0);
+    }
+    if(channels) c = channels;
+    int i,j,k;
+    image im = make_image(w_len, h_len, c);
+    for(k = 0; k < c; ++k){
+        for(j = h_start; j < h_start + h_len; ++j){
+            for(i = w_start; i < w_start + w_len; ++i){
+                int dst_index = (i-w_start) + w_len*(j-h_start) + w_len*h_len*k;
+                int src_index = k + c*i + c*w*j;
+                im.data[dst_index] = (float)data[src_index]/255.;
+            }
+        }
+    }
+    free(data);
+    return im;
+}
 image load_image_stb(char *filename, int channels)
 {
     int w, h, c;

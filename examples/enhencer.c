@@ -22,7 +22,6 @@ void train_enhencer(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     int seed = rand();
     int i;
     for(i = 0; i < ngpus; ++i){
-        srand(seed);
 #ifdef GPU
         cuda_set_device(gpus[i]);
 #endif
@@ -216,6 +215,299 @@ static void print_cocos(FILE *fp, char *image_path, detection *dets, int num_box
             if (dets[i].prob[j]) fprintf(fp, "{\"image_id\":%d, \"category_id\":%d, \"bbox\":[%f, %f, %f, %f], \"score\":%f},\n", image_id, coco_ids[j], bx, by, bw, bh, dets[i].prob[j]);
         }
     }
+}
+
+images load_partial_enhenced_images_stb(char *filename, network *net, int channels, int out_w, int out_h, int in_w, int in_h)
+{
+    images images;
+    int w_remainder = in_w % out_w;
+    int h_remainder = in_h % out_h; 
+    int row;
+    int col;
+    if (w_remainder != 0){
+        col = in_w / out_w + 1;
+    } else {
+        col = in_w / out_w;
+    }
+    if (h_remainder != 0){
+        row = in_h / out_h + 1;
+    } else {
+        row = in_h / out_h;
+    }
+    col = in_w / out_w + 2;
+    row = in_h / out_h + 2;
+
+    int row_offset = (row * out_h - in_h) / (row-1);
+    int col_offset = (col * out_w - in_w) / (col-1);
+
+    int row_remainder = (row * out_h - in_h) % (row-1);
+    int col_remainder = (col * out_w - in_w) % (col-1);
+
+
+
+    images.data = calloc(row * col, sizeof(image));
+    images.row = row;
+    images.col = col;
+    
+    int w_len = out_w;
+    int h_len = out_h;
+    images.w = 3*w_len;
+    images.h = 3*h_len;
+
+    for (int i=0; i<row; i++){
+        for (int j=0; j<col; j++) {
+            int r_offset = j*row_offset;
+            int c_offset = i*col_offset;
+            if(i == row-1){
+                c_offset += col_remainder;
+            }
+            if(j == col-1){
+                r_offset += row_remainder;
+            }
+            // images.data[i*col+j].h = out_h*3;
+            // images.data[i*col+j].w = out_w*3;
+            // images.data[i*col+j].data = network_predict(net, load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len).data);
+
+            image partial_img = load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+            image temp_image = make_image(3*out_w, 3*out_h, 3);
+            temp_image.data = network_predict(net, partial_img.data);
+            images.data[i*col+j] = copy_image(temp_image);
+            // printf("row: %d, col: %d, w_range: %d %d, h_range: %d %d\n", i, j, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+        }
+    }
+    return images;
+}
+image enhence_image2(char *filename, network *net,int channels, int out_w, int out_h, int in_w, int in_h)
+{
+    printf("image enhencer started\n");
+    images images;
+    int w_remainder = in_w % out_w;
+    int h_remainder = in_h % out_h; 
+    int row;
+    int col;
+    if (w_remainder != 0){
+        col = in_w / out_w + 1;
+    } else {
+        col = in_w / out_w;
+    }
+    if (h_remainder != 0){
+        row = in_h / out_h + 1;
+    } else {
+        row = in_h / out_h;
+    }
+    col = in_w / out_w + 2;
+    row = in_h / out_h + 2;
+
+    int row_offset = (row * out_h - in_h) / (row-1);
+    int col_offset = (col * out_w - in_w) / (col-1);
+
+    int row_remainder = (row * out_h - in_h) % (row-1);
+    int col_remainder = (col * out_w - in_w) % (col-1);
+    images.data = calloc(row * col, sizeof(image));
+    images.row = row;
+    images.col = col;
+    
+    int w_len = out_w;
+    int h_len = out_h;
+    images.w = 3*w_len;
+    images.h = 3*h_len;
+
+    for (int i=0; i<row; i++){
+        for (int j=0; j<col; j++) {
+            int r_offset = j*row_offset;
+            int c_offset = i*col_offset;
+            if(i == row-1){
+                c_offset += col_remainder;
+            }
+            if(j == col-1){
+                r_offset += row_remainder;
+            }
+
+            // printf("out_w: %d, out_h: %d\n", 3*out_w, 3*out_h);
+            image partial_img = load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+            image temp_image = make_image(3*out_w, 3*out_h, 3);
+            temp_image.data = network_predict(net, partial_img.data);
+            images.data[i*col+j] = copy_image(temp_image);
+            // printf("row: %d, col: %d, w_range: %d %d, h_range: %d %d\n", i, j, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+        }
+    }
+    save_image(images.data[2], "temp");
+    image out_im = make_image(3*in_w, 3*in_h, 3);
+    // int row = images.row;
+    // int col = images.col;
+    // int in_w = images.w;
+    // int in_h = images.h;
+    printf("row: %d, col: %d, in_w: %d, in_h: %d\n", images.data[1].w, images.data[1].h, in_w, in_h);
+    printf("row_offset: %d\n", row_offset);
+    row_offset *= 3;
+    col_offset *= 3;
+    printf("row_offset: %d\n", row_offset);
+
+    row_remainder *= 3;
+    col_remainder *= 3;
+
+    // printf("row: %d, col: %d, in_w: %d, in_h: %d, row_offset: %d, col_offset: %d, row_remainder: %d, col_remainder: %d\n", row, col, in_w, in_h, row_offset, col_offset, row_remainder, col_remainder);
+
+    int edge_offset=10;
+    for(int c=0; c<channels; c++){
+        for(int i=0; i<row * (out_w*3) ; i++){
+            for(int j=0; j<col * (out_h*3); j++){
+                int row_idx = i / (out_h*3);
+                int col_idx = j / (out_w*3);
+                int w_idx = j % (out_w*3);
+                int h_idx = i % (out_h*3);
+
+                int r_offset = row_idx*(row_offset);
+                int c_offset = col_idx*(col_offset);
+
+                if(row_idx == row-1){
+                    r_offset += row_remainder;
+                }
+                if(col_idx == col-1){
+                    c_offset += col_remainder;
+                }
+
+
+
+                if (row_idx != 0 && h_idx < 12){
+                    continue;
+                }
+                if (col_idx != 0 && w_idx < 12){
+                    continue;
+                }
+                // if (row_idx != row-1 && h_idx > in_h-3){
+                //     continue;
+                // }
+                // if (col_idx != col-1 && w_idx > in_w-3){
+                //     continue;
+                // }
+                out_im.data[(j-c_offset) + (i-r_offset)*(in_w*3) + (in_w*3)*(in_h*3)*c] 
+                = images.data[row_idx*col+col_idx].data[(h_idx)*(out_w*3) 
+                + w_idx + c*(out_h*3)*(out_w*3)];
+            }
+        }
+
+    }
+    
+
+
+    return out_im;
+
+}
+image enhence_image(char *filename, network *net,int channels, int out_w, int out_h, int in_w, int in_h)
+{
+    printf("image enhencer started");
+    images images;
+    int w_remainder = in_w % out_w;
+    int h_remainder = in_h % out_h; 
+    int row;
+    int col;
+    if (w_remainder != 0){
+        col = in_w / out_w + 1;
+    } else {
+        col = in_w / out_w;
+    }
+    if (h_remainder != 0){
+        row = in_h / out_h + 1;
+    } else {
+        row = in_h / out_h;
+    }
+    col = in_w / out_w + 2;
+    row = in_h / out_h + 2;
+
+    int row_offset = (row * out_h - in_h) / (row-1);
+    int col_offset = (col * out_w - in_w) / (col-1);
+
+    int row_remainder = (row * out_h - in_h) % (row-1);
+    int col_remainder = (col * out_w - in_w) % (col-1);
+
+
+
+    images.data = calloc(row * col, sizeof(image));
+    images.row = row;
+    images.col = col;
+    
+    int w_len = out_w;
+    int h_len = out_h;
+    images.w = 3*w_len;
+    images.h = 3*h_len;
+
+    for (int i=0; i<row; i++){
+        for (int j=0; j<col; j++) {
+            int r_offset = j*row_offset;
+            int c_offset = i*col_offset;
+            if(i == row-1){
+                c_offset += col_remainder;
+            }
+            if(j == col-1){
+                r_offset += row_remainder;
+            }
+
+            printf("out_w: %d, out_h: %d", 3*out_w, 3*out_h);
+            image partial_img = load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+            image temp_image = make_image(3*out_w, 3*out_h, 3);
+            temp_image.data = network_predict(net, partial_img.data);
+            images.data[i*col+j] = copy_image(temp_image);
+            // printf("row: %d, col: %d, w_range: %d %d, h_range: %d %d\n", i, j, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+        }
+    }
+    image out_im = make_image(3*in_w, 3*in_h, 3);
+    // int row = images.row;
+    // int col = images.col;
+    // int in_w = images.w;
+    // int in_h = images.h;
+    printf("row: %d, col: %d, in_w: %d, in_h: %d", row, col, in_w, in_h);
+
+
+    row_offset *= 3;
+    col_offset *= 3;
+
+    row_remainder *= 3;
+    col_remainder *= 3;
+
+    // printf("row: %d, col: %d, in_w: %d, in_h: %d, row_offset: %d, col_offset: %d, row_remainder: %d, col_remainder: %d\n", row, col, in_w, in_h, row_offset, col_offset, row_remainder, col_remainder);
+
+    int edge_offset = 5;
+    for(int c=0; c<channels; c++){
+        for(int i=0; i<row * (in_w*3) ; i++){
+            for(int j=0; j<col * (in_h*3); j++){
+                int row_idx = i / (out_h*3);
+                int col_idx = j / (out_w*3);
+                int w_idx = j % (out_w*3);
+                int h_idx = i % (out_h*3);
+
+                int r_offset = row_idx*(row_offset);
+                int c_offset = col_idx*(col_offset);
+
+                if(row_idx == row-1){
+                    r_offset += row_remainder;
+                }
+                if(col_idx == col-1){
+                    c_offset += col_remainder;
+                }
+
+
+
+                if (row_idx != 0 && h_idx < 3){
+                    continue;
+                }
+                if (col_idx != 0 && w_idx < 3){
+                    continue;
+                }
+                // if (row_idx != row-1 && h_idx > in_h-3){
+                //     continue;
+                // }
+                // if (col_idx != col-1 && w_idx > in_w-3){
+                //     continue;
+                // }
+                out_im.data[(j-c_offset) + (i-r_offset)*(in_w*3) + (in_w*3)*(in_h*3)*c] 
+                = images.data[row_idx*col+col_idx].data[(h_idx)*out_w 
+                + w_idx + c*out_h*out_w];
+            }
+        }
+
+    }
+    return out_im;
 }
 
 // void print_enhencer_enhencement(FILE **fps, char *id, detection *dets, int total, int classes, int w, int h)
@@ -620,10 +912,10 @@ void test_enhencer(char *datacfg, char *cfgfile, char *weightfile, char *filenam
             if(!input) return;
             strtok(input, "\n");
         }
-        image im = load_image_color(input,0,0);
-        save_image(im, "loaded_image");
-        image sized = resize_image(im, net->w, net->h);
-        save_image(sized, "input_image");
+        // image im = load_image_color(input,0,0);
+        // save_image(im, "loaded_image");
+        // image sized = resize_image(im, net->w, net->h);
+        // save_image(sized, "input_image");
         // image sized = letterbox_image(im, net->w, net->h);
         //image sized = resize_image(im, net->w, net->h);
         //image sized2 = resize_max(im, net->w);
@@ -632,18 +924,23 @@ void test_enhencer(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         layer l = net->layers[net->n-1];
 
 
-        float *X = sized.data;
+        // float *X = sized.data;
         time=what_time_is_it_now();
         
-        float *predicted_output = network_predict(net, X);
+        // float *predicted_output = network_predict(net, X);
 
         printf("%s: Predicted in %f seconds.\n", input, what_time_is_it_now()-time);
-        image output_im;
-        output_im.w = 3*net->w;
-        output_im.h = 3*net->h;
-        output_im.c = 3;
-        output_im.data = predicted_output;
-        save_image(output_im, "output_image");
+        image out2 = enhence_image2(input, net, 3, 104, 104, 700, 700);
+        save_image(out2, "output_image2");
+        // image output_im;
+        // output_im.w = 3*net->w;
+        // output_im.h = 3*net->h;
+        // output_im.c = 3;
+        // output_im.data = predicted_output;
+        // images out_image = load_partial_enhenced_images_stb(input, net, 3, 104, 104, 700, 500);
+        // image out = merge_partial_images(out_image, 3, 2100, 1500);
+        // save_image(out, "output_image");
+
         return;
 
 
