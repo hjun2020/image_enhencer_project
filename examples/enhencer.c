@@ -1,4 +1,5 @@
 #include "darknet.h"
+#include "stb_image.h"
 
 static int coco_ids[] = {1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,27,28,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,70,72,73,74,75,76,77,78,79,80,81,82,84,85,86,87,88,89,90};
 
@@ -217,84 +218,91 @@ static void print_cocos(FILE *fp, char *image_path, detection *dets, int num_box
     }
 }
 
-images load_partial_enhenced_images_stb(char *filename, network *net, int channels, int out_w, int out_h, int in_w, int in_h)
-{
-    images images;
-    int w_remainder = in_w % out_w;
-    int h_remainder = in_h % out_h; 
-    int row;
-    int col;
-    if (w_remainder != 0){
-        col = in_w / out_w + 1;
-    } else {
-        col = in_w / out_w;
-    }
-    if (h_remainder != 0){
-        row = in_h / out_h + 1;
-    } else {
-        row = in_h / out_h;
-    }
-    col = in_w / out_w + 2;
-    row = in_h / out_h + 2;
+// images load_partial_enhenced_images_stb(char *filename, network *net, int channels, int out_w, int out_h, int in_w, int in_h)
+// {
+//     images images;
+//     int w_remainder = in_w % out_w;
+//     int h_remainder = in_h % out_h; 
+//     int row;
+//     int col;
+//     if (w_remainder != 0){
+//         col = in_w / out_w + 1;
+//     } else {
+//         col = in_w / out_w;
+//     }
+//     if (h_remainder != 0){
+//         row = in_h / out_h + 1;
+//     } else {
+//         row = in_h / out_h;
+//     }
+//     col = in_w / out_w + 2;
+//     row = in_h / out_h + 2;
 
-    int row_offset = (row * out_h - in_h) / (row-1);
-    int col_offset = (col * out_w - in_w) / (col-1);
+//     int row_offset = (row * out_h - in_h) / (row-1);
+//     int col_offset = (col * out_w - in_w) / (col-1);
 
-    int row_remainder = (row * out_h - in_h) % (row-1);
-    int col_remainder = (col * out_w - in_w) % (col-1);
+//     int row_remainder = (row * out_h - in_h) % (row-1);
+//     int col_remainder = (col * out_w - in_w) % (col-1);
 
 
 
-    images.data = calloc(row * col, sizeof(image));
-    images.row = row;
-    images.col = col;
+//     images.data = calloc(row * col, sizeof(image));
+//     images.row = row;
+//     images.col = col;
     
-    int w_len = out_w;
-    int h_len = out_h;
-    images.w = 3*w_len;
-    images.h = 3*h_len;
+//     int w_len = out_w;
+//     int h_len = out_h;
+//     images.w = 3*w_len;
+//     images.h = 3*h_len;
 
-    for (int i=0; i<row; i++){
-        for (int j=0; j<col; j++) {
-            int r_offset = j*row_offset;
-            int c_offset = i*col_offset;
-            if(i == row-1){
-                c_offset += col_remainder;
-            }
-            if(j == col-1){
-                r_offset += row_remainder;
-            }
-            // images.data[i*col+j].h = out_h*3;
-            // images.data[i*col+j].w = out_w*3;
-            // images.data[i*col+j].data = network_predict(net, load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len).data);
+//     for (int i=0; i<row; i++){
+//         for (int j=0; j<col; j++) {
+//             int r_offset = j*row_offset;
+//             int c_offset = i*col_offset;
+//             if(i == row-1){
+//                 c_offset += col_remainder;
+//             }
+//             if(j == col-1){
+//                 r_offset += row_remainder;
+//             }
+//             // images.data[i*col+j].h = out_h*3;
+//             // images.data[i*col+j].w = out_w*3;
+//             // images.data[i*col+j].data = network_predict(net, load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len).data);
 
-            image partial_img = load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
-            image temp_image = make_image(3*out_w, 3*out_h, 3);
-            temp_image.data = network_predict(net, partial_img.data);
-            images.data[i*col+j] = copy_image(temp_image);
-            // printf("row: %d, col: %d, w_range: %d %d, h_range: %d %d\n", i, j, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
-        }
-    }
-    return images;
-}
+//             image partial_img = load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+//             image temp_image = make_image(3*out_w, 3*out_h, 3);
+//             temp_image.data = network_predict(net, partial_img.data);
+//             images.data[i*col+j] = copy_image(temp_image);
+//             // printf("row: %d, col: %d, w_range: %d %d, h_range: %d %d\n", i, j, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+//         }
+//     }
+//     return images;
+// }
 image enhence_image2(char *filename, network *net,int channels, int out_w, int out_h, int in_w, int in_h)
 {
-    printf("image enhencer started\n");
+    int w,h,c;
+    unsigned char *data = stbi_load(filename, &w, &h, &c, channels);
+    if (!data) {
+        fprintf(stderr, "Cannot load image \"%s\"\nSTB Reason: %s\n", filename, stbi_failure_reason());
+        exit(0);
+    }
     images images;
+    in_w = w;
+    in_h = h;
     int w_remainder = in_w % out_w;
     int h_remainder = in_h % out_h; 
     int row;
     int col;
-    if (w_remainder != 0){
-        col = in_w / out_w + 1;
-    } else {
-        col = in_w / out_w;
-    }
-    if (h_remainder != 0){
-        row = in_h / out_h + 1;
-    } else {
-        row = in_h / out_h;
-    }
+    // if (w_remainder != 0){
+    //     col = in_w / out_w + 1;
+    // } else {
+    //     col = in_w / out_w;
+    // }
+    // if (h_remainder != 0){
+    //     row = in_h / out_h + 1;
+    // } else {
+    //     row = in_h / out_h;
+    // }
     col = in_w / out_w + 2;
     row = in_h / out_h + 2;
 
@@ -311,6 +319,7 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
     int h_len = out_h;
     images.w = 3*w_len;
     images.h = 3*h_len;
+    printf("row_offset: %d, col_offset: %d, row_remainder: %d, col_remainder: %d\n", row_offset, col_offset, row_remainder, col_remainder);
 
     for (int i=0; i<row; i++){
         for (int j=0; j<col; j++) {
@@ -324,24 +333,26 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
             }
 
             // printf("out_w: %d, out_h: %d\n", 3*out_w, 3*out_h);
-            image partial_img = load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+            image partial_img = load_partial_image_stb(data, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len, in_w, in_h, c);
             image temp_image = make_image(3*out_w, 3*out_h, 3);
             temp_image.data = network_predict(net, partial_img.data);
             images.data[i*col+j] = copy_image(temp_image);
-            // printf("row: %d, col: %d, w_range: %d %d, h_range: %d %d\n", i, j, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+            
+            printf("row: %d, col: %d, w_range: %d %d, h_range: %d %d\n", i, j, j*w_len-c_offset, w_len, i*h_len-r_offset, h_len);
         }
     }
+    free(data);
     save_image(images.data[2], "temp");
     image out_im = make_image(3*in_w, 3*in_h, 3);
     // int row = images.row;
     // int col = images.col;
     // int in_w = images.w;
     // int in_h = images.h;
-    printf("row: %d, col: %d, in_w: %d, in_h: %d\n", images.data[1].w, images.data[1].h, in_w, in_h);
-    printf("row_offset: %d\n", row_offset);
+    printf("row: %d, col: %d, in_w: %d, in_h: %d, row_remainder: %d, col_remainder: %d\n", row, col, in_w, in_h, row_remainder, col_remainder);
+    printf("row_offset: %d, col_offset: %d\n", row_offset, col_offset);
     row_offset *= 3;
     col_offset *= 3;
-    printf("row_offset: %d\n", row_offset);
+    printf("row_offset: %d, col_offset: %d\n", row_offset, col_offset);
 
     row_remainder *= 3;
     col_remainder *= 3;
@@ -350,8 +361,8 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
 
     int edge_offset=10;
     for(int c=0; c<channels; c++){
-        for(int i=0; i<row * (out_w*3) ; i++){
-            for(int j=0; j<col * (out_h*3); j++){
+        for(int i=0; i<row * (out_h*3) ; i++){
+            for(int j=0; j<col * (out_w*3); j++){
                 int row_idx = i / (out_h*3);
                 int col_idx = j / (out_w*3);
                 int w_idx = j % (out_w*3);
@@ -369,12 +380,12 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
 
 
 
-                if (row_idx != 0 && h_idx < 12){
-                    continue;
-                }
-                if (col_idx != 0 && w_idx < 12){
-                    continue;
-                }
+                // if (row_idx != 0 && h_idx < 80){
+                //     continue;
+                // }
+                // if (col_idx != 0 && w_idx < 80){
+                //     continue;
+                // }
                 // if (row_idx != row-1 && h_idx > in_h-3){
                 //     continue;
                 // }
@@ -394,121 +405,121 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
     return out_im;
 
 }
-image enhence_image(char *filename, network *net,int channels, int out_w, int out_h, int in_w, int in_h)
-{
-    printf("image enhencer started");
-    images images;
-    int w_remainder = in_w % out_w;
-    int h_remainder = in_h % out_h; 
-    int row;
-    int col;
-    if (w_remainder != 0){
-        col = in_w / out_w + 1;
-    } else {
-        col = in_w / out_w;
-    }
-    if (h_remainder != 0){
-        row = in_h / out_h + 1;
-    } else {
-        row = in_h / out_h;
-    }
-    col = in_w / out_w + 2;
-    row = in_h / out_h + 2;
+// image enhence_image(char *filename, network *net,int channels, int out_w, int out_h, int in_w, int in_h)
+// {
+//     printf("image enhencer started");
+//     images images;
+//     int w_remainder = in_w % out_w;
+//     int h_remainder = in_h % out_h; 
+//     int row;
+//     int col;
+//     if (w_remainder != 0){
+//         col = in_w / out_w + 1;
+//     } else {
+//         col = in_w / out_w;
+//     }
+//     if (h_remainder != 0){
+//         row = in_h / out_h + 1;
+//     } else {
+//         row = in_h / out_h;
+//     }
+//     col = in_w / out_w + 2;
+//     row = in_h / out_h + 2;
 
-    int row_offset = (row * out_h - in_h) / (row-1);
-    int col_offset = (col * out_w - in_w) / (col-1);
+//     int row_offset = (row * out_h - in_h) / (row-1);
+//     int col_offset = (col * out_w - in_w) / (col-1);
 
-    int row_remainder = (row * out_h - in_h) % (row-1);
-    int col_remainder = (col * out_w - in_w) % (col-1);
+//     int row_remainder = (row * out_h - in_h) % (row-1);
+//     int col_remainder = (col * out_w - in_w) % (col-1);
 
 
 
-    images.data = calloc(row * col, sizeof(image));
-    images.row = row;
-    images.col = col;
+//     images.data = calloc(row * col, sizeof(image));
+//     images.row = row;
+//     images.col = col;
     
-    int w_len = out_w;
-    int h_len = out_h;
-    images.w = 3*w_len;
-    images.h = 3*h_len;
+//     int w_len = out_w;
+//     int h_len = out_h;
+//     images.w = 3*w_len;
+//     images.h = 3*h_len;
 
-    for (int i=0; i<row; i++){
-        for (int j=0; j<col; j++) {
-            int r_offset = j*row_offset;
-            int c_offset = i*col_offset;
-            if(i == row-1){
-                c_offset += col_remainder;
-            }
-            if(j == col-1){
-                r_offset += row_remainder;
-            }
+//     for (int i=0; i<row; i++){
+//         for (int j=0; j<col; j++) {
+//             int r_offset = j*row_offset;
+//             int c_offset = i*col_offset;
+//             if(i == row-1){
+//                 c_offset += col_remainder;
+//             }
+//             if(j == col-1){
+//                 r_offset += row_remainder;
+//             }
 
-            printf("out_w: %d, out_h: %d", 3*out_w, 3*out_h);
-            image partial_img = load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
-            image temp_image = make_image(3*out_w, 3*out_h, 3);
-            temp_image.data = network_predict(net, partial_img.data);
-            images.data[i*col+j] = copy_image(temp_image);
-            // printf("row: %d, col: %d, w_range: %d %d, h_range: %d %d\n", i, j, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
-        }
-    }
-    image out_im = make_image(3*in_w, 3*in_h, 3);
-    // int row = images.row;
-    // int col = images.col;
-    // int in_w = images.w;
-    // int in_h = images.h;
-    printf("row: %d, col: %d, in_w: %d, in_h: %d", row, col, in_w, in_h);
-
-
-    row_offset *= 3;
-    col_offset *= 3;
-
-    row_remainder *= 3;
-    col_remainder *= 3;
-
-    // printf("row: %d, col: %d, in_w: %d, in_h: %d, row_offset: %d, col_offset: %d, row_remainder: %d, col_remainder: %d\n", row, col, in_w, in_h, row_offset, col_offset, row_remainder, col_remainder);
-
-    int edge_offset = 5;
-    for(int c=0; c<channels; c++){
-        for(int i=0; i<row * (in_w*3) ; i++){
-            for(int j=0; j<col * (in_h*3); j++){
-                int row_idx = i / (out_h*3);
-                int col_idx = j / (out_w*3);
-                int w_idx = j % (out_w*3);
-                int h_idx = i % (out_h*3);
-
-                int r_offset = row_idx*(row_offset);
-                int c_offset = col_idx*(col_offset);
-
-                if(row_idx == row-1){
-                    r_offset += row_remainder;
-                }
-                if(col_idx == col-1){
-                    c_offset += col_remainder;
-                }
+//             printf("out_w: %d, out_h: %d", 3*out_w, 3*out_h);
+//             image partial_img = load_partial_image_stb(filename, 3, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+//             image temp_image = make_image(3*out_w, 3*out_h, 3);
+//             temp_image.data = network_predict(net, partial_img.data);
+//             images.data[i*col+j] = copy_image(temp_image);
+//             // printf("row: %d, col: %d, w_range: %d %d, h_range: %d %d\n", i, j, j*w_len-r_offset, w_len, i*h_len-c_offset, h_len);
+//         }
+//     }
+//     image out_im = make_image(3*in_w, 3*in_h, 3);
+//     // int row = images.row;
+//     // int col = images.col;
+//     // int in_w = images.w;
+//     // int in_h = images.h;
+//     printf("row: %d, col: %d, in_w: %d, in_h: %d", row, col, in_w, in_h);
 
 
+//     row_offset *= 3;
+//     col_offset *= 3;
 
-                if (row_idx != 0 && h_idx < 3){
-                    continue;
-                }
-                if (col_idx != 0 && w_idx < 3){
-                    continue;
-                }
-                // if (row_idx != row-1 && h_idx > in_h-3){
-                //     continue;
-                // }
-                // if (col_idx != col-1 && w_idx > in_w-3){
-                //     continue;
-                // }
-                out_im.data[(j-c_offset) + (i-r_offset)*(in_w*3) + (in_w*3)*(in_h*3)*c] 
-                = images.data[row_idx*col+col_idx].data[(h_idx)*out_w 
-                + w_idx + c*out_h*out_w];
-            }
-        }
+//     row_remainder *= 3;
+//     col_remainder *= 3;
 
-    }
-    return out_im;
-}
+//     // printf("row: %d, col: %d, in_w: %d, in_h: %d, row_offset: %d, col_offset: %d, row_remainder: %d, col_remainder: %d\n", row, col, in_w, in_h, row_offset, col_offset, row_remainder, col_remainder);
+
+//     int edge_offset = 5;
+//     for(int c=0; c<channels; c++){
+//         for(int i=0; i<row * (in_w*3) ; i++){
+//             for(int j=0; j<col * (in_h*3); j++){
+//                 int row_idx = i / (out_h*3);
+//                 int col_idx = j / (out_w*3);
+//                 int w_idx = j % (out_w*3);
+//                 int h_idx = i % (out_h*3);
+
+//                 int r_offset = row_idx*(row_offset);
+//                 int c_offset = col_idx*(col_offset);
+
+//                 if(row_idx == row-1){
+//                     r_offset += row_remainder;
+//                 }
+//                 if(col_idx == col-1){
+//                     c_offset += col_remainder;
+//                 }
+
+
+
+//                 if (row_idx != 0 && h_idx < 3){
+//                     continue;
+//                 }
+//                 if (col_idx != 0 && w_idx < 3){
+//                     continue;
+//                 }
+//                 // if (row_idx != row-1 && h_idx > in_h-3){
+//                 //     continue;
+//                 // }
+//                 // if (col_idx != col-1 && w_idx > in_w-3){
+//                 //     continue;
+//                 // }
+//                 out_im.data[(j-c_offset) + (i-r_offset)*(in_w*3) + (in_w*3)*(in_h*3)*c] 
+//                 = images.data[row_idx*col+col_idx].data[(h_idx)*out_w 
+//                 + w_idx + c*out_h*out_w];
+//             }
+//         }
+
+//     }
+//     return out_im;
+// }
 
 // void print_enhencer_enhencement(FILE **fps, char *id, detection *dets, int total, int classes, int w, int h)
 // {
