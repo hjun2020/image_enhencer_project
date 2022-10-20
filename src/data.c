@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "stb_image.h"
+
+
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 list *get_paths(char *filename)
@@ -1066,15 +1069,33 @@ data load_data_enhence(int n, char **paths, int m, int w, int h, int boxes, int 
 
     for(i = 0; i < n; ++i){
 
-        image orig = load_image_color(random_paths[i], 0, 0);
+        int w,h,c;
+        unsigned char *data = stbi_load(random_paths[i], &w, &h, &c, 3);
+        if (!data) {
+            fprintf(stderr, "Cannot load image \"%s\"\nSTB Reason: %s\n", random_paths[i], stbi_failure_reason());
+            exit(0);
+        }
+
+        int w_start = rand() % (w-312);
+        int h_start = rand() % (h-312);
+        
+        image sized_truth = load_partial_image_stb(data, 3, w_start, 312, h_start, 312, w,h,c);
+
+        printf("w_start: %d, h_start: %d, w: %d, h: %d\n", w_start, h_start, w, h);
+
+        // image orig = load_image_color(random_paths[i], 0, 0);
         // printf("original image: %d, %d, %d\n", orig.w, orig.h, orig.c);
         // image sized = make_image(w, h, orig.c);
-        image sized = resize_image(orig, w, h);
+        image sized = resize_image(sized_truth, 104, 104);
+
+        // save_image(sized_truth, "sized_truth");
+        // save_image(sized, "input_x");
+        free(data);
         // printf("original image: %d, %d, %d\n", sized.w, sized.h, sized.c);
         // fill_image(sized, .5);
 
 
-        image sized_truth = resize_image(orig, 3*w,3*h);
+        // image sized_truth = resize_image(orig, 3*w,3*h);
         // fill_image(sized_truth, .5);
         // printf("%d %d %d %d\n", sized_truth.w, sized_truth.h, sized_truth.c, sized_truth.w*sized_truth.h*sized_truth.c);
         // printf("%d\n", d.y.cols);
@@ -1114,18 +1135,8 @@ data load_data_enhence(int n, char **paths, int m, int w, int h, int boxes, int 
         // fill_truth_test(random_paths[i], sized_truth.data, d.y.vals[i], d.y.cols, classes, flip, -dx/w, -dy/h, nw/w, nh/h);
         fill_truth_test(random_paths[i], sized_truth.data, d.y.vals[i], d.y.cols);
 
-        // printf("address of truth is %p, address of matrix %p\n", (void*)d.X.vals[i], (void*)d.y.vals[i]);
-        // printf("address of truth is %f, address of matrix %f\n", sized_truth.data[0], d.y.vals[i][0]);
-        // image sized_real = make_empty_image(w,h,3);
-        // sized_real.data = d.X.vals[0];
-        // image sized_truth_real = make_empty_image(3*w,3*h,3);
-        // sized_truth_real.data = d.y.vals[0];
-        // save_image(sized_real, "sized");
-        // save_image(sized_truth_real, "sized_truth");
-        
-        // printf("sized truth cols: %d\n", d.y.cols);
-        // save_image(orig, "orig");
-        free_image(orig);
+
+        free_image(sized_truth);
     }
     free(random_paths);
     return d;

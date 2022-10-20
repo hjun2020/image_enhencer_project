@@ -45,19 +45,6 @@ void train_enhencer(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
 
     list *plist = get_paths(train_images);
 
-
-
-    // list list_ = *plist;
-    // node current = *list_.front;
-
-    // int idx;
-    // for (idx=0; idx<list_.size; idx++){
-    //     printf("%s\n", (char *)current.val);
-    //     current = *current.next;
-    // }
-    
-
-    //int N = plist->size;
     char **paths = (char **)list_to_array(plist);
 
     load_args args = get_base_args(net);
@@ -69,8 +56,6 @@ void train_enhencer(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     args.jitter = jitter;
     args.num_boxes = l.max_boxes;
     args.d = &buffer;
-    // args.type = DETECTION_DATA;
-    //args.type = INSTANCE_DATA;
     args.type = ENHENCE_DATA;
 
     args.threads = 64;
@@ -113,30 +98,7 @@ void train_enhencer(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
         pthread_join(load_thread, 0);
         train = buffer;
         load_thread = load_data(args);
-        // return;
-        /*
-           int k;
-           for(k = 0; k < l.max_boxes; ++k){
-           box b = float_to_box(train.y.vals[10] + 1 + k*5);
-           if(!b.x) break;
-           printf("loaded: %f %f %f %f\n", b.x, b.y, b.w, b.h);
-           }
-         */
-        /*
-           int zz;
-           for(zz = 0; zz < train.X.cols; ++zz){
-           image im = float_to_image(net->w, net->h, 3, train.X.vals[zz]);
-           int k;
-           for(k = 0; k < l.max_boxes; ++k){
-           box b = float_to_box(train.y.vals[zz] + k*5, 1);
-           printf("%f %f %f %f\n", b.x, b.y, b.w, b.h);
-           draw_bbox(im, b, 1, 1,0,0);
-           }
-           show_image(im, "truth11");
-           cvWaitKey(0);
-           save_image(im, "truth11");
-           }
-         */
+
 
         printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
 
@@ -162,7 +124,7 @@ void train_enhencer(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
             char buff[256];
-            sprintf(buff, "%s/%s.backup_test3", backup_directory, base);
+            sprintf(buff, "%s/%s.backup_test4", backup_directory, base);
             save_weights(net, buff);
         }
         if(i%10000==0 || (i < 1000 && i%100 == 0)){
@@ -170,7 +132,7 @@ void train_enhencer(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
             char buff[256];
-            sprintf(buff, "%s/%s_%d.weights3", backup_directory, base, i);
+            sprintf(buff, "%s/%s_%d.weights4", backup_directory, base, i);
             save_weights(net, buff);
         }
         free_data(train);
@@ -344,10 +306,7 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
     free(data);
     save_image(images.data[2], "temp");
     image out_im = make_image(3*in_w, 3*in_h, 3);
-    // int row = images.row;
-    // int col = images.col;
-    // int in_w = images.w;
-    // int in_h = images.h;
+
     printf("row: %d, col: %d, in_w: %d, in_h: %d, row_remainder: %d, col_remainder: %d\n", row, col, in_w, in_h, row_remainder, col_remainder);
     printf("row_offset: %d, col_offset: %d\n", row_offset, col_offset);
     row_offset *= 3;
@@ -377,21 +336,13 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
                 if(col_idx == col-1){
                     c_offset += col_remainder;
                 }
-
-
-
                 if (row_idx != 0 && h_idx < 24){
                     continue;
                 }
                 if (col_idx != 0 && w_idx < 24){
                     continue;
                 }
-                // if (row_idx != row-1 && h_idx > in_h-3){
-                //     continue;
-                // }
-                // if (col_idx != col-1 && w_idx > in_w-3){
-                //     continue;
-                // }
+
                 out_im.data[(j-c_offset) + (i-r_offset)*(in_w*3) + (in_w*3)*(in_h*3)*c] 
                 = images.data[row_idx*col+col_idx].data[(h_idx)*(out_w*3) 
                 + w_idx + c*(out_h*3)*(out_w*3)];
@@ -399,9 +350,6 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
         }
 
     }
-    
-
-
     return out_im;
 
 }
