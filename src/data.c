@@ -1070,11 +1070,21 @@ data load_data_enhence(int n, char **paths, int m, int w, int h, int boxes, int 
     for(i = 0; i < n; ++i){
 
         int w,h,c;
+        // int j=10;
         unsigned char *data = stbi_load(random_paths[i], &w, &h, &c, 3);
+        if(w<312 || h < 312){
+            // free(data);
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!: w was %d and h was %d\n", w, h);
+            data = stbi_load(random_paths[10], &w, &h, &c, 3);
+
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!: w was %d and h was %d\n", w, h);
+
+        }
         if (!data) {
             fprintf(stderr, "Cannot load image \"%s\"\nSTB Reason: %s\n", random_paths[i], stbi_failure_reason());
             exit(0);
         }
+
 
         int w_start = rand() % (w-312);
         int h_start = rand() % (h-312);

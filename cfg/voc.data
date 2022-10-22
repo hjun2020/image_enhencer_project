@@ -1,6 +1,6 @@
 
 classes= 20
-train  = /Users/hyunkyujun/development/darknet/voc_data/2007_train.txt
-valid  = /Users/hyunkyujun/development/darknet/voc_data/2007_test.txt
+train  = /home/ubuntu/developer/darknet/2007_train.txt
+valid  = /home/ubuntu/developer/darknet/2007_test.txt
 names = data/voc.names
 backup = backup
