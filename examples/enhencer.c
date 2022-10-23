@@ -124,7 +124,7 @@ void train_enhencer(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
             char buff[256];
-            sprintf(buff, "%s/%s.backup_test4", backup_directory, base);
+            sprintf(buff, "%s/%s.backup_test10", backup_directory, base);
             save_weights(net, buff);
         }
         if(i%10000==0 || (i < 1000 && i%100 == 0)){
@@ -132,7 +132,7 @@ void train_enhencer(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
             char buff[256];
-            sprintf(buff, "%s/%s_%d.weights4", backup_directory, base, i);
+            sprintf(buff, "%s/%s_%d.weights10", backup_directory, base, i);
             save_weights(net, buff);
         }
         free_data(train);
@@ -871,8 +871,8 @@ void test_enhencer(char *datacfg, char *cfgfile, char *weightfile, char *filenam
             if(!input) return;
             strtok(input, "\n");
         }
-        // image im = load_image_color(input,0,0);
-        // save_image(im, "loaded_image");
+        image im = load_image_color(input,0,0);
+        save_image(im, "loaded_image");
         // image sized = resize_image(im, net->w, net->h);
         // save_image(sized, "input_image");
         // image sized = letterbox_image(im, net->w, net->h);

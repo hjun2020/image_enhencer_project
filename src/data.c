@@ -9,6 +9,9 @@
 
 #include "stb_image.h"
 
+#define min(x, y) (x) < (y) ? (x) : (y)
+#define max(x, y) (x) > (y) ? (x) : (y)
+
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -1068,18 +1071,17 @@ data load_data_enhence(int n, char **paths, int m, int w, int h, int boxes, int 
 
 
     for(i = 0; i < n; ++i){
-
         int w,h,c;
         // int j=10;
         unsigned char *data = stbi_load(random_paths[i], &w, &h, &c, 3);
-        if(w<312 || h < 312){
-            // free(data);
-            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!: w was %d and h was %d\n", w, h);
-            data = stbi_load(random_paths[10], &w, &h, &c, 3);
+        // if(w<312 || h < 312){
+        //     // free(data);
+        //     printf("!!!!!!!!!!!!!!!!!!!!!!!!!!: w was %d and h was %d\n", w, h);
+        //     data = stbi_load(random_paths[10], &w, &h, &c, 3);
 
-            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!: w was %d and h was %d\n", w, h);
+        //     printf("!!!!!!!!!!!!!!!!!!!!!!!!!!: w was %d and h was %d\n", w, h);
 
-        }
+        // }
         if (!data) {
             fprintf(stderr, "Cannot load image \"%s\"\nSTB Reason: %s\n", random_paths[i], stbi_failure_reason());
             exit(0);
@@ -1088,8 +1090,25 @@ data load_data_enhence(int n, char **paths, int m, int w, int h, int boxes, int 
 
         int w_start = rand() % (w-312);
         int h_start = rand() % (h-312);
+
+        int w_len = min(w, 312);
+        int h_len = min(h, 312);
         
-        image sized_truth = load_partial_image_stb(data, 3, w_start, 312, h_start, 312, w,h,c);
+        image sized_truth;
+        
+        if(w_len != 312 || h_len != 312){
+            sized_truth = resize_image(load_partial_image_stb(data, 3, 0, w_len, 0, h_len, w,h,c), 312, 312);
+            // save_image(sized_truth, "resized_img");
+            // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!: w was %d and h was %d\n", w, h);
+            // printf("current image size is %d and %d", sized_truth.w, sized_truth.h);
+        } else {
+            sized_truth = load_partial_image_stb(data, 3, w_start, w_len, h_start, h_len, w,h,c);
+            // if(rand()%10 == 0){
+            //     save_image(sized_truth, "unresized_img");
+
+            // }
+        }
+
 
         printf("w_start: %d, h_start: %d, w: %d, h: %d\n", w_start, h_start, w, h);
 

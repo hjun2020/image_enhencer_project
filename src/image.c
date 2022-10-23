@@ -1380,6 +1380,7 @@ image load_partial_image_stb(unsigned char *data, int channels, int w_start, int
     if(channels) c = channels;
     
     int i,j,k;
+
     image im = make_image(w_len, h_len, c);
     for(k = 0; k < c; ++k){
         for(j = h_start; j < h_start + h_len; ++j){
