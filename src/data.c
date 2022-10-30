@@ -1110,7 +1110,7 @@ data load_data_enhence(int n, char **paths, int m, int w, int h, int boxes, int 
         }
 
 
-        printf("w_start: %d, h_start: %d, w: %d, h: %d\n", w_start, h_start, w, h);
+        // printf("w_start: %d, h_start: %d, w: %d, h: %d\n", w_start, h_start, w, h);
 
         // image orig = load_image_color(random_paths[i], 0, 0);
         // printf("original image: %d, %d, %d\n", orig.w, orig.h, orig.c);
