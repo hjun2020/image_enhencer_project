@@ -255,18 +255,9 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
     int h_remainder = in_h % out_h; 
     int row;
     int col;
-    // if (w_remainder != 0){
-    //     col = in_w / out_w + 1;
-    // } else {
-    //     col = in_w / out_w;
-    // }
-    // if (h_remainder != 0){
-    //     row = in_h / out_h + 1;
-    // } else {
-    //     row = in_h / out_h;
-    // }
-    col = in_w / out_w + 2;
-    row = in_h / out_h + 2;
+
+    col = in_w / out_w + 5;
+    row = in_h / out_h + 5;
 
     int row_offset = (row * out_h - in_h) / (row-1);
     int col_offset = (col * out_w - in_w) / (col-1);
@@ -336,10 +327,10 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
                 if(col_idx == col-1){
                     c_offset += col_remainder;
                 }
-                if (row_idx != 0 && h_idx < 24){
+                if (row_idx != 0 && h_idx < 7){
                     continue;
                 }
-                if (col_idx != 0 && w_idx < 24){
+                if (col_idx != 0 && w_idx < 7){
                     continue;
                 }
 
