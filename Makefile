@@ -62,7 +62,7 @@ OBJ=gemm.o utils.o convolutional_layer.o list.o image.o im2col.o col2im.o blas.o
 # EXECOBJA=captcha.o lsd.o super.o art.o tag.o cifar.o go.o rnn.o segmenter.o regressor.o classifier.o coco.o yolo.o detector.o enhencer.o nightmare.o instance-segmenter.o darknet.o
 EXECOBJA= enhencer.o darknet.o
 
-ifeq ($(GPU), 1) 
+ifeq ($(GPU), 1)   
 LDFLAGS+= -lstdc++ 
 OBJ+=convolutional_kernels.o deconvolutional_kernels.o activation_kernels.o im2col_kernels.o col2im_kernels.o blas_kernels.o crop_layer_kernels.o dropout_layer_kernels.o maxpool_layer_kernels.o avgpool_layer_kernels.o
 endif

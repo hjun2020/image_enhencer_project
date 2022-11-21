@@ -304,7 +304,7 @@ image enhence_image2(char *filename, network *net,int channels, int out_w, int o
         }
     }
     free(data);
-    save_image(images.data[2], "temp");
+    // save_image(images.data[2], "temp");
     image out_im = make_image(3*in_w, 3*in_h, 3);
 
     printf("row: %d, col: %d, in_w: %d, in_h: %d, row_remainder: %d, col_remainder: %d\n", row, col, in_w, in_h, row_remainder, col_remainder);
@@ -890,7 +890,8 @@ void test_enhencer(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 
         printf("%s: Predicted in %f seconds.\n", input, what_time_is_it_now()-time);
         image out2 = enhence_image2(input, net, 3, 104, 104, 700, 700);
-        save_image(out2, "output_image2");
+        // save_image(out2, "/home/ubuntu/developer/django-project/src/media/output_image2");
+        save_image(out2, outfile);
         // image output_im;
         // output_im.w = 3*net->w;
         // output_im.h = 3*net->h;
